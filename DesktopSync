@@ -1,0 +1,41 @@
+#!/bin/sh
+
+#This script looks and sees if Desktop & Documents Sync is checked on icloud
+
+iCloudDrivePath="/Library/Mobile Documents/com~apple~CloudDocs"
+
+# Get the logged in user and their home folder
+grabConsoleUserAndHome()
+{
+currentUser=$( echo "show State:/Users/ConsoleUser" | scutil | awk '/Name :/ && ! /loginwindow/ { print $3 }' )
+homeFolder=$(dscl . read "/Users/$currentUser" NFSHomeDirectory | cut -d: -f 2 | sed 's/^ *//'| tr -d '
+')
+
+}
+
+grabConsoleUserAndHome
+
+if [[ "$currentUser" == "root" ]]
+    then
+        exit
+fi
+
+# Checks if the drive path and file exists
+if [[ -e "$homeFolder""$iCloudDrivePath" ]]
+    then
+        # Checks status of iCloud Drive Desktop and Documents setting
+        iCloudDesktop=$(defaults read /Users/$currentUser/Library/Preferences/com.apple.finder.plist FXICloudDriveDesktop)
+        if [[ "$iCloudDesktop" = 1 ]];
+            then
+                echo 'iCloud Desktop Enabled';
+
+        else
+            echo 'Drive enabled, Desktop Disabled';
+
+        fi;
+
+    else
+        echo "iCloud Drive OFF"
+fi
+
+exit 0
